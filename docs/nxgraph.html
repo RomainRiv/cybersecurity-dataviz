@@ -34,7 +34,7 @@
             text-anchor: middle; /* Center the text */
         }
         .checkbox-container {
-            width: 20%; /* Adjust width as needed */
+            width: 10%; /* Adjust width as needed */
             padding: 10px;
             border-left: 1px solid #ccc; /* Optional, for visual separation */
         }
@@ -71,21 +71,30 @@
             stroke-width: 6px; /* Make the stroke wider to make it more visible */
         }
     </style>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="button-container">
-        <button onclick="toggleArrows()">Toggle Arrows</button>
-        <!-- <div id="view-coordinates" style="margin-top: 10px;">View Coordinates: </div> -->
-        <input type="text" id="searchBox" placeholder="Search node..." onkeyup="searchNodeOnEnter(event)">
-        <button onclick="searchNode()">Search</button>
-        <button onclick="clearHighlights()">Clear Highlights</button>
-    </div>
-    <div class="content-container">
-        <div class="graph-container">
-            <!-- Graph will be here... -->
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <button onclick="toggleArrows()">Toggle Arrows</button>
+                <!-- <div id="view-coordinates" style="margin-top: 10px;">View Coordinates: </div> -->
+                <input type="text" id="searchBox" class="form-control" placeholder="Search node..." onkeyup="searchNodeOnEnter(event)">
+                <button onclick="searchNode()">Search</button>
+                <button onclick="clearHighlights()">Clear Highlights</button>
+            </div>
         </div>
-        <div class="checkbox-container">
-            <!-- Checkboxes will be dynamically added here -->
+        <div class="row">
+            <div class="col-lg-9 col-md-8">
+                <div class="graph-container">
+                    <!-- Graph will be here... -->
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4">
+                <div class="checkbox-container">
+                    <!-- Checkboxes will be dynamically added here -->
+                </div>
+            </div>
         </div>
     </div>
     <script>
@@ -377,37 +386,46 @@
 
         let checkboxDiv = document.querySelector('.checkbox-container');
 
-        // Create checkboxes for each type and its abstractions
+        // Clear existing content
+        checkboxDiv.innerHTML = '';
+
+        // Create checkboxes for each type and its abstractions using Bootstrap styles
         typeAbstractionMap.forEach((abstractions, type) => {
             let typeContainer = document.createElement('div');
-            typeContainer.classList.add('type-group');
+            typeContainer.classList.add('mb-3'); // Bootstrap margin-bottom class
 
             let typeHeader = document.createElement('h3');
             typeHeader.textContent = type;
             typeContainer.appendChild(typeHeader);
 
             abstractions.forEach(abstraction => {
-                let checkboxContainer = document.createElement('div');
-                checkboxContainer.classList.add('checkbox-group');
+                // Bootstrap form-check div
+                let formCheckDiv = document.createElement('div');
+                formCheckDiv.classList.add('form-check');
 
+                // Bootstrap styled checkbox
                 let checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
+                checkbox.classList.add('form-check-input');
                 checkbox.id = 'checkbox-' + type + '-' + abstraction;
                 checkbox.checked = true;
                 checkbox.addEventListener('change', () => updateGraph(data));
 
+                // Label for checkbox
                 let label = document.createElement('label');
+                label.classList.add('form-check-label');
                 label.htmlFor = 'checkbox-' + type + '-' + abstraction;
                 label.textContent = abstraction;
 
-                checkboxContainer.appendChild(checkbox);
-                checkboxContainer.appendChild(label);
-                typeContainer.appendChild(checkboxContainer);
+                formCheckDiv.appendChild(checkbox);
+                formCheckDiv.appendChild(label);
+                typeContainer.appendChild(formCheckDiv);
             });
 
             checkboxDiv.appendChild(typeContainer);
         });
     }
+
 
     // Use the sanitized filename in the fetch request, with the 'graphs' subdirectory
     const jsonFilename = "graphs/" + getJsonFilenameFromUrl();
@@ -420,5 +438,9 @@
         .catch(error => console.error('Error loading data:', error));
 
     </script>
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
