@@ -3,6 +3,7 @@
 <head>
     <title>Graph Visualizer</title>
     <script src="lib/d3.v7.min.js"></script>
+    <meta charset="UTF-8">
     <style>
         /* Additional CSS styles if needed */
         body, html {
@@ -20,24 +21,16 @@
         .content-container {
             display: flex;
         }
+        
         .graph-container {
-            /* flex: auto; */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: calc(100% - 40px); /* Adjust based on actual button container height */
+            position: relative; /* Needed for absolute positioning of the drawer */
         }
 
         .node-label-big, .node-label-medium, .node-label-small {
             font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
             text-anchor: middle; /* Center the text */
         }
-        .checkbox-container {
-            width: 10%; /* Adjust width as needed */
-            padding: 10px;
-            border-left: 1px solid #ccc; /* Optional, for visual separation */
-        }
+
         .type-group {
             margin-bottom: 10px;
         }
@@ -70,27 +63,67 @@
             stroke: #00ff6e; /* Green stroke for highlighted nodes */
             stroke-width: 6px; /* Make the stroke wider to make it more visible */
         }
+
+        /* Position the toggle button */
+        #drawerToggle {
+            position: absolute; /* Change from fixed to absolute */
+            top: 5%;
+            left: 10px;
+            z-index: 1010;
+            transform: translateY(100%); /* Move it down by the height of the button row */
+        }
+
+        /* Drawer styles remain the same */
+        .drawer {
+            position: absolute;
+            top: 15%;
+            display: none; /* Hide drawer initially */
+            width: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            background-color: rgb(240, 240, 240);
+            padding-left: 2%;
+        }
+
+        .drawer-open {
+            display: block; /* Show drawer */
+        }
+
+        #drawerToggle.drawer-open i {
+            transform: rotate(180deg);
+        }
     </style>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <button onclick="toggleArrows()">Toggle Arrows</button>
-                <!-- <div id="view-coordinates" style="margin-top: 10px;">View Coordinates: </div> -->
+        <div class="row align-items-center">
+            <div class="col">
+                <button onclick="toggleArrows()" class="btn btn-secondary">Toggle Arrows ➡</button>
+            </div>
+            <div class="col">
                 <input type="text" id="searchBox" class="form-control" placeholder="Search node..." onkeyup="searchNodeOnEnter(event)">
-                <button onclick="searchNode()">Search</button>
-                <button onclick="clearHighlights()">Clear Highlights</button>
+            </div>         
+            <div class="col">
+                <button onclick="searchNode()" class="btn btn-primary">Search 🔎</button>
+            </div>
+            <div class="col">
+                <button onclick="clearHighlights()" class="btn btn-secondary">Clear Highlights ❌</button>
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-9 col-md-8">
-                <div class="graph-container">
-                    <!-- Graph will be here... -->
-                </div>
+            <div class="col-12 p0 graph-container"">
+                <!-- Graph will be here... -->
             </div>
-            <div class="col-lg-3 col-md-4">
+
+            <!-- Drawer Toggle Button -->
+            <button id="drawerToggle" class="btn btn-primary">
+                <i class="fas fa-eye"></i>
+            </button>
+
+            <!-- Drawer -->
+            <div id="checkboxDrawer" class="drawer">
                 <div class="checkbox-container">
                     <!-- Checkboxes will be dynamically added here -->
                 </div>
@@ -104,9 +137,9 @@
 
         function createChart(data) {
             // Use window dimensions to calculate width and height
-            const width = window.innerWidth * 0.8; // Adjust the width to leave space for checkboxes
+            const width = window.innerWidth * 0.95; // Adjust the width to leave space for checkboxes
             // const width = window.innerWidth * 0.95; // 95% of window width
-            const height = window.innerHeight * 0.9; // 90% of window height
+            const height = window.innerHeight * 0.90; // 90% of window height
             
                 // Adjust the viewBox to center at (0, 0)
             const viewBoxX = -width / 2;
@@ -436,6 +469,13 @@
             globalNodeSelection = createChart(data); // Store the initial node selection
         })
         .catch(error => console.error('Error loading data:', error));
+
+        document.getElementById('drawerToggle').addEventListener('click', function() {
+            var drawer = document.getElementById('checkboxDrawer');
+            var toggleButton = document.getElementById('drawerToggle');
+            drawer.classList.toggle('drawer-open');
+            toggleButton.classList.toggle('drawer-open');
+        });
 
     </script>
     <!-- Bootstrap JS, Popper.js, and jQuery -->
