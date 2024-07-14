@@ -132,14 +132,7 @@ function createChart(data) {
     // Function to show the tooltip
     function showTooltip(event, d) {
         const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("position", "absolute")
-            .style("background-color", "white")
-            .style("border", "solid")
-            .style("border-width", "1px")
-            .style("border-radius", "5px")
-            .style("padding", "10px")
-            .style("opacity", 0.9);
+            .attr("class", "tooltip");
 
         tooltip.html(d.Description)
             .style("left", (event.pageX + 10) + "px")

@@ -110,3 +110,12 @@ body, html {
     z-index: 1000;
     width: 100%;
 }
+
+.tooltip {
+    position: absolute;
+    background-color: white;
+    border: solid 1px;
+    border-radius: 5px;
+    padding: 10px;
+    opacity: 0.9;
+}
