@@ -48,6 +48,13 @@ function addEventListeners() {
     });
 
     document.getElementById('searchBox').addEventListener('keyup', searchNodeOnEnter);
+
+    // Add event listener for Escape key to close search results
+    document.addEventListener('keydown', (event) => {
+        if (event.key === "Escape") {
+            clearSearchResults();
+        }
+    });
 }
 
 function toggleDrawer() {
@@ -333,6 +340,11 @@ function zoomToNode(node) {
 function clearHighlights() {
     globalNodeSelection.classed("highlighted", false);
     document.getElementById('searchResults').innerHTML = ''; // Clear search results
+}
+
+// Clear search results
+function clearSearchResults() {
+    document.getElementById('searchResults').innerHTML = '';
 }
 
 // Function to update the graph based on checkbox states
