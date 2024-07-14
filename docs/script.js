@@ -12,6 +12,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
         .catch(error => console.error('Error loading data:', error));
 });
 
+// Configuration and constants
+const CONFIG = {
+    minLinkDistance: 100,
+    repulsionStrength: -400,
+    alphaDecay: 0.01,
+    velocityDecay: 0.2,
+    svgWidth: window.innerWidth * 0.95,
+    svgHeight: window.innerHeight * 0.90,
+    viewBoxX: -window.innerWidth * 0.475,
+    viewBoxY: -window.innerHeight * 0.45
+};
+
 function addEventListeners() {
     // Use event delegation for better performance
     document.addEventListener('click', (event) => {
@@ -42,15 +54,12 @@ let globalNodeSelection;
 let zoom; // Declare zoom globally so it can be used in multiple functions
 
 function createChart(data) {
-    const width = window.innerWidth * 0.95;
-    const height = window.innerHeight * 0.90;
-    const viewBoxX = -width / 2;
-    const viewBoxY = -height / 2;
+    const { svgWidth, svgHeight, viewBoxX, viewBoxY } = CONFIG;
 
     const links = data.links.map(d => ({ ...d }));
     const nodes = data.nodes.map(d => ({ ...d }));
 
-    const svg = createSVG(width, height, viewBoxX, viewBoxY);
+    const svg = createSVG(svgWidth, svgHeight, viewBoxX, viewBoxY);
     const g = svg.append("g");
 
     setupSimulation(nodes, links);
@@ -75,8 +84,7 @@ function createSVG(width, height, viewBoxX, viewBoxY) {
 }
 
 function setupSimulation(nodes, links) {
-    const minLinkDistance = 100;
-    const repulsionStrength = -400;
+    const { minLinkDistance, repulsionStrength, alphaDecay, velocityDecay } = CONFIG;
 
     simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(minLinkDistance))
@@ -84,8 +92,8 @@ function setupSimulation(nodes, links) {
         .force("center", d3.forceCenter(0, 0))
         .force("x", d3.forceX()) 
         .force("y", d3.forceY())
-        .alphaDecay(0.01)
-        .velocityDecay(0.2)
+        .alphaDecay(alphaDecay)
+        .velocityDecay(velocityDecay)
         .on("tick", ticked);
 
     function ticked() {
