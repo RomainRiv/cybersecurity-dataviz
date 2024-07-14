@@ -1,14 +1,5 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-    document.getElementById('toggleArrowsButton').addEventListener('click', toggleArrows);
-    document.getElementById('searchBox').addEventListener('keyup', searchNodeOnEnter);
-    document.getElementById('searchButton').addEventListener('click', searchNode);
-    document.getElementById('clearHighlightsButton').addEventListener('click', clearHighlights);
-    document.getElementById('drawerToggle').addEventListener('click', function() {
-        var drawer = document.getElementById('checkboxDrawer');
-        var toggleButton = document.getElementById('drawerToggle');
-        drawer.classList.toggle('drawer-open');
-        toggleButton.classList.toggle('drawer-open');
-    });
+    addEventListeners();
 
     // Use the sanitized filename in the fetch request, with the 'graphs' subdirectory
     const jsonFilename = "graphs/" + getJsonFilenameFromUrl();
@@ -20,6 +11,21 @@ document.addEventListener('DOMContentLoaded', (event) => {
         })
         .catch(error => console.error('Error loading data:', error));
 });
+
+function addEventListeners() {
+    document.getElementById('toggleArrowsButton').addEventListener('click', toggleArrows);
+    document.getElementById('searchBox').addEventListener('keyup', searchNodeOnEnter);
+    document.getElementById('searchButton').addEventListener('click', searchNode);
+    document.getElementById('clearHighlightsButton').addEventListener('click', clearHighlights);
+    document.getElementById('drawerToggle').addEventListener('click', toggleDrawer);
+}
+
+function toggleDrawer() {
+    var drawer = document.getElementById('checkboxDrawer');
+    var toggleButton = document.getElementById('drawerToggle');
+    drawer.classList.toggle('drawer-open');
+    toggleButton.classList.toggle('drawer-open');
+}
 
 let showArrows = false;
 let link; // Declare link globally
@@ -290,9 +296,11 @@ function clearHighlights() {
 
 // Function to update the graph based on checkbox states
 function updateGraph(originalData) {
+    const checkboxes = document.querySelectorAll('.checkbox-container input[type="checkbox"]');
+    const checkedCheckboxes = Array.from(checkboxes).filter(checkbox => checkbox.checked);
+
     let filteredNodes = originalData.nodes.filter(node => {
-        let checkbox = document.getElementById('checkbox-' + node.type + '-' + node.abstraction);
-        return checkbox && checkbox.checked;
+        return checkedCheckboxes.some(checkbox => checkbox.id === 'checkbox-' + node.type + '-' + node.abstraction);
     });
 
     let filteredNodeIds = new Set(filteredNodes.map(node => node.id));
