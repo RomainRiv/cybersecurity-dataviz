@@ -98,6 +98,26 @@
         #drawerToggle.drawer-open i {
             transform: rotate(180deg);
         }
+
+        .search-result {
+            border: 1px solid #ccc;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        .search-result:hover {
+            background-color: #f0f0f0;
+        }
+
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            background-color: white;
+            position: absolute;
+            z-index: 1000;
+            width: 100%;
+        }
     </style>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
@@ -108,8 +128,9 @@
             <div class="col">
                 <button onclick="toggleArrows()" class="btn btn-secondary">Toggle Arrows ➡</button>
             </div>
-            <div class="col">
+            <div class="col position-relative">
                 <input type="text" id="searchBox" class="form-control" placeholder="Search node..." onkeyup="searchNodeOnEnter(event)">
+                <div id="searchResults" class="search-results"></div>
             </div>         
             <div class="col">
                 <button onclick="searchNode()" class="btn btn-primary">Search 🔎</button>
@@ -364,12 +385,30 @@
     
     function searchNode() {
         const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+        const resultsContainer = document.getElementById('searchResults');
+        resultsContainer.innerHTML = ''; // Clear previous results
+
         globalNodeSelection.each(function(d) {
             if (d.label.toLowerCase().includes(searchTerm)) {
                 d3.select(this).classed("highlighted", true);
+                
+                // Add matching result to the results container
+                const resultDiv = document.createElement('div');
+                resultDiv.classList.add('search-result');
+                resultDiv.textContent = d.label;
+                resultDiv.onclick = function() {
+                    highlightNode(d);
+                };
+                resultsContainer.appendChild(resultDiv);
             } else {
                 d3.select(this).classed("highlighted", false);
             }
+        });
+    }
+
+    function highlightNode(node) {
+        globalNodeSelection.classed("highlighted", function(d) {
+            return d.id === node.id;
         });
     }
 
@@ -381,11 +420,15 @@
         // Check if the Enter key was pressed
         if (event.key === "Enter") {
             searchNode();
+        } else {
+            // Perform a real-time search to update the results dropdown
+            searchNode();
         }
     }
     
     function clearHighlights() {
         globalNodeSelection.classed("highlighted", false);
+        document.getElementById('searchResults').innerHTML = ''; // Clear search results
     }
 
     // Function to update the graph based on checkbox states
