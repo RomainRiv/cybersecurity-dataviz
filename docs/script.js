@@ -1,3 +1,26 @@
+document.addEventListener('DOMContentLoaded', (event) => {
+    document.getElementById('toggleArrowsButton').addEventListener('click', toggleArrows);
+    document.getElementById('searchBox').addEventListener('keyup', searchNodeOnEnter);
+    document.getElementById('searchButton').addEventListener('click', searchNode);
+    document.getElementById('clearHighlightsButton').addEventListener('click', clearHighlights);
+    document.getElementById('drawerToggle').addEventListener('click', function() {
+        var drawer = document.getElementById('checkboxDrawer');
+        var toggleButton = document.getElementById('drawerToggle');
+        drawer.classList.toggle('drawer-open');
+        toggleButton.classList.toggle('drawer-open');
+    });
+
+    // Use the sanitized filename in the fetch request, with the 'graphs' subdirectory
+    const jsonFilename = "graphs/" + getJsonFilenameFromUrl();
+    fetch(jsonFilename)
+        .then(response => response.json())
+        .then(data => {
+            createAbstractionCheckboxes(data); // Create checkboxes
+            globalNodeSelection = createChart(data); // Store the initial node selection
+        })
+        .catch(error => console.error('Error loading data:', error));
+});
+
 let showArrows = false;
 let link; // Declare link globally
 let globalNodeSelection;
@@ -135,11 +158,6 @@ function createChart(data) {
         }
     }
 
-    function toggleArrows() {
-        showArrows = !showArrows;
-        link.attr("marker-end", showArrows ? "url(#arrowhead)" : "");
-    }
-
     function ticked() {
         link
             .attr("x1", d => d.source.x)
@@ -216,9 +234,6 @@ function getJsonFilenameFromUrl() {
     }
     return 'default.json'; // Default filename if no parameter is provided or after sanitization
 }
-
-// Call the function to update the title
-updatePageTitle();
 
 function searchNode() {
     const searchTerm = document.getElementById('searchBox').value.toLowerCase();
@@ -356,20 +371,3 @@ function createAbstractionCheckboxes(data) {
         checkboxDiv.appendChild(typeContainer);
     });
 }
-
-// Use the sanitized filename in the fetch request, with the 'graphs' subdirectory
-const jsonFilename = "graphs/" + getJsonFilenameFromUrl();
-fetch(jsonFilename)
-    .then(response => response.json())
-    .then(data => {
-        createAbstractionCheckboxes(data); // Create checkboxes
-        globalNodeSelection = createChart(data); // Store the initial node selection
-    })
-    .catch(error => console.error('Error loading data:', error));
-
-document.getElementById('drawerToggle').addEventListener('click', function() {
-    var drawer = document.getElementById('checkboxDrawer');
-    var toggleButton = document.getElementById('drawerToggle');
-    drawer.classList.toggle('drawer-open');
-    toggleButton.classList.toggle('drawer-open');
-});
