@@ -1,15 +1,22 @@
 document.addEventListener('DOMContentLoaded', (event) => {
     addEventListeners();
 
+    showLoadingIndicator();
+
     // Use the sanitized filename in the fetch request, with the 'graphs' subdirectory
     const jsonFilename = "graphs/" + getJsonFilenameFromUrl();
     fetch(jsonFilename)
         .then(response => response.json())
         .then(data => {
+            hideLoadingIndicator();
             createAbstractionCheckboxes(data); // Create checkboxes
             globalNodeSelection = createChart(data); // Store the initial node selection
         })
-        .catch(error => console.error('Error loading data:', error));
+        .catch(error => {
+            hideLoadingIndicator();
+            showError('Error loading data: ' + error.message);
+            console.error('Error loading data:', error);
+        });
 });
 
 // Configuration and constants
@@ -35,6 +42,8 @@ function addEventListeners() {
             clearHighlights();
         } else if (event.target.closest('#drawerToggle')) {
             toggleDrawer();
+        } else if (event.target.matches('#closeErrorButton')) {
+            hideError();
         }
     });
 
@@ -403,4 +412,49 @@ function createAbstractionCheckboxes(data) {
 
         checkboxDiv.appendChild(typeContainer);
     });
+}
+
+// Display loading indicator while fetching data
+function showLoadingIndicator() {
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.id = 'loadingIndicator';
+    loadingIndicator.textContent = 'Loading...';
+    loadingIndicator.className = 'loading-indicator';
+    document.body.appendChild(loadingIndicator);
+}
+
+// Hide loading indicator once data is loaded
+function hideLoadingIndicator() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        document.body.removeChild(loadingIndicator);
+    }
+}
+
+// Display error message if data fails to load
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'errorDiv';
+    errorDiv.className = 'error-div';
+
+    const errorMessage = document.createElement('span');
+    errorMessage.textContent = message;
+
+    const closeButton = document.createElement('button');
+    closeButton.id = 'closeErrorButton';
+    closeButton.className = 'close-error-button';
+    closeButton.textContent = 'x';
+
+    errorDiv.appendChild(errorMessage);
+    errorDiv.appendChild(closeButton);
+
+    document.body.appendChild(errorDiv);
+}
+
+// Hide error message
+function hideError() {
+    const errorDiv = document.getElementById('errorDiv');
+    if (errorDiv) {
+        document.body.removeChild(errorDiv);
+    }
 }
