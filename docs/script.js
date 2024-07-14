@@ -28,91 +28,153 @@ function toggleDrawer() {
 }
 
 let showArrows = false;
-let link; // Declare link globally
+let link, node, labels, simulation; // Declare variables globally
 let globalNodeSelection;
 let zoom; // Declare zoom globally so it can be used in multiple functions
 
 function createChart(data) {
-    // Use window dimensions to calculate width and height
-    const width = window.innerWidth * 0.95; // Adjust the width to leave space for checkboxes
-    const height = window.innerHeight * 0.90; // 90% of window height
+    const width = window.innerWidth * 0.95;
+    const height = window.innerHeight * 0.90;
     const viewBoxX = -width / 2;
     const viewBoxY = -height / 2;
 
-    const links = data.links.map(d => ({...d}));
-    const nodes = data.nodes.map(d => ({...d}));
+    const links = data.links.map(d => ({ ...d }));
+    const nodes = data.nodes.map(d => ({ ...d }));
 
-    // Set minimum link distance and repulsion strength
-    const minLinkDistance = 100; // Adjust this value as needed
-    const repulsionStrength = -400; // Adjust this value as needed
-    
-    const svg = d3.create("svg")
+    const svg = createSVG(width, height, viewBoxX, viewBoxY);
+    const g = svg.append("g");
+
+    setupSimulation(nodes, links);
+    setupMarkers(svg);
+    setupZoom(svg, g);
+
+    link = createLinks(g, links);
+    node = createNodes(g, nodes); // Initialize node
+    labels = createLabels(g, nodes); // Initialize labels
+
+    document.querySelector('.graph-container').appendChild(svg.node());
+    return node;
+}
+
+function createSVG(width, height, viewBoxX, viewBoxY) {
+    return d3.create("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [viewBoxX, viewBoxY, width, height])
         .attr("preserveAspectRatio", "xMidYMid meet")
         .attr("style", "max-width: 100%; height: auto; display: block; margin: auto;");
-    
-    // Create a simulation with several forces.
-    const simulation = d3.forceSimulation(nodes)
+}
+
+function setupSimulation(nodes, links) {
+    const minLinkDistance = 100;
+    const repulsionStrength = -400;
+
+    simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(minLinkDistance))
         .force("charge", d3.forceManyBody().strength(repulsionStrength))
-        .force("center", d3.forceCenter(0, 0)) // Add forceCenter here
-        .force("x", d3.forceX()) // You might not need these anymore
-        .force("y", d3.forceY()) // You might not need these anymore
+        .force("center", d3.forceCenter(0, 0))
+        .force("x", d3.forceX()) 
+        .force("y", d3.forceY())
         .alphaDecay(0.01)
         .velocityDecay(0.2)
-        .on("tick", ticked);                    
+        .on("tick", ticked);
 
-    // Define arrow marker
+    function ticked() {
+        link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => getLinkX2(d))
+            .attr("y2", d => getLinkY2(d));
+
+        node
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+
+        labels
+            .attr("x", d => d.x)
+            .attr("y", d => d.y + d.size + 8);
+    }
+
+    function getLinkX2(d) {
+        var dx = d.target.x - d.source.x;
+        var dy = d.target.y - d.source.y;
+        var dr = Math.sqrt(dx * dx + dy * dy);
+        var r = d.target.size;
+        return d.target.x - (r * dx / dr);
+    }
+
+    function getLinkY2(d) {
+        var dx = d.target.x - d.source.x;
+        var dy = d.target.y - d.source.y;
+        var dr = Math.sqrt(dx * dx + dy * dy);
+        var r = d.target.size;
+        return d.target.y - (r * dy / dr);
+    }
+}
+
+function setupMarkers(svg) {
     svg.append("defs").append("marker")
         .attr("id", "arrowhead")
         .attr("viewBox", "-0 -5 10 10")
-        .attr("refX", 13) // Adjust to position the arrowhead
+        .attr("refX", 13)
         .attr("refY", 0)
         .attr("orient", "auto")
         .attr("markerWidth", 6)
         .attr("markerHeight", 6)
         .attr("xoverflow", "visible")
-    .append("svg:path")
+        .append("svg:path")
         .attr("d", "M 0,-5 L 10 ,0 L 0,5")
         .attr("fill", "#999")
-        .style("stroke","none");
+        .style("stroke", "none");
+}
 
-    // Container for the zoomable elements
-    const g = svg.append("g");
+function setupZoom(svg, g) {
+    zoom = d3.zoom().on("zoom", (event) => {
+        g.attr("transform", event.transform);
+    });
 
-    link = g.append("g")
+    svg.call(zoom);
+}
+
+function createLinks(g, links) {
+    return g.append("g")
         .attr("stroke", "#999")
         .attr("stroke-opacity", 0.6)
-    .selectAll("line")
-    .data(links)
-    .join("line")
+        .selectAll("line")
+        .data(links)
+        .join("line")
         .attr("stroke-width", d => 1)
-        .attr("marker-end", showArrows ? "url(#arrowhead)" : ""); // Set arrow based on showArrows
+        .attr("marker-end", showArrows ? "url(#arrowhead)" : "");
+}
 
-    const node = g.append("g")
+function createNodes(g, nodes) {
+    return g.append("g")
         .attr("stroke", "#000000")
         .attr("stroke-width", 1.5)
-    .selectAll("circle")
-    .data(nodes)
-    .join("circle")
+        .selectAll("circle")
+        .data(nodes)
+        .join("circle")
         .attr("r", d => d.size)
         .attr("fill", d => d.color)
         .on("mouseover", showTooltip)
         .on("mouseout", hideTooltip)
-        .on("dblclick", function(event, d) {
-            event.stopPropagation(); // Prevent zooming
-            openNodeUrl(event, d); // Then handle the URL opening
-        });
+        .on("dblclick", function (event, d) {
+            event.stopPropagation();
+            openNodeUrl(event, d);
+        })
+        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended));
+}
 
-    // Append labels for each node
-    const labels = g.append("g")
-    .selectAll("text")
-    .data(nodes)
-    .join("text")
+function createLabels(g, nodes) {
+    return g.append("g")
+        .selectAll("text")
+        .data(nodes)
+        .join("text")
         .attr("class", "node-label-medium")
-        .style("font-size", d => { // hacky, need to figure out why it cannot be done at class level...
+        .style("font-size", d => {
             switch (d.label_class) {
                 case "node-label-big": return "15px";
                 case "node-label-medium": return "10px";
@@ -121,89 +183,42 @@ function createChart(data) {
             }
         })
         .text(d => d.label);
+}
 
-    node.call(d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended));
+function showTooltip(event, d) {
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip");
 
-    // Zoom functionality
-    zoom = d3.zoom()
-        .on("zoom", (event) => {
-            g.attr("transform", event.transform);
-        });
+    tooltip.html(d.Description)
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 28) + "px");
+}
 
-    svg.call(zoom);
-    
-    // Function to show the tooltip
-    function showTooltip(event, d) {
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip");
+function hideTooltip() {
+    d3.select(".tooltip").remove();
+}
 
-        tooltip.html(d.Description)
-            .style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 28) + "px");
+function openNodeUrl(event, d) {
+    if (d.url) {
+        window.open(d.url, '_blank');
     }
+}
 
-    // Function to hide the tooltip
-    function hideTooltip() {
-        d3.select(".tooltip").remove();
-    }
+function dragstarted(event) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    event.subject.fx = event.subject.x;
+    event.subject.fy = event.subject.y;
+}
 
-    // Function to open URL in a new tab
-    function openNodeUrl(event, d) {
-        if (d.url) { // Check if the URL field is present
-            window.open(d.url, '_blank'); // Open the URL in a new tab
-        }
-    }
+function dragged(event) {
+    event.subject.fx = event.x;
+    event.subject.fy = event.y;
+}
 
-    function ticked() {
-        link
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", function(d) {
-                var dx = d.target.x - d.source.x;
-                var dy = d.target.y - d.source.y;
-                var dr = Math.sqrt(dx * dx + dy * dy);
-                var r = d.target.size; // Radius of target node
-                return d.target.x - (r * dx / dr);
-            })
-            .attr("y2", function(d) {
-                var dx = d.target.x - d.source.x;
-                var dy = d.target.y - d.source.y;
-                var dr = Math.sqrt(dx * dx + dy * dy);
-                var r = d.target.size; // Radius of target node
-                return d.target.y - (r * dy / dr);
-            });
-
-        node
-            .attr("cx", d => d.x)
-            .attr("cy", d => d.y);
-
-        // Update label positions
-        labels
-            .attr("x", d => d.x)
-            .attr("y", d => d.y + d.size + 8); // Position below the node
-    }
-
-    function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event) {
-        event.subject.fx = event.x;
-        event.subject.fy = event.y;
-    }
-
-    function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-    }
-    document.querySelector('.graph-container').appendChild(svg.node());
-    return node;
+function dragended(event) {
+    if (!event.active) simulation.alphaTarget(0);
+    event.subject.fx = null;
+    event.subject.fy = null;
 }
 
 // Define toggleArrows globally
@@ -258,7 +273,7 @@ function searchNode() {
 }
 
 function highlightNode(node) {
-    globalNodeSelection.classed("highlighted", function(d) {
+    globalNodeSelection.classed("highlighted", function (d) {
         return d.id === node.id;
     });
 }
