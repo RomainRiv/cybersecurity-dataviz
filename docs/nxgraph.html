@@ -161,6 +161,8 @@
         let showArrows = false;
         let link; // Declare link globally
         let globalNodeSelection;
+        let zoom; // Declare zoom globally so it can be used in multiple functions
+
 
         function createChart(data) {
             // Use window dimensions to calculate width and height
@@ -263,9 +265,12 @@
                 .on("end", dragended));
 
             // Zoom functionality
-            svg.call(d3.zoom().on("zoom", (event) => {
-                g.attr("transform", event.transform);
-            }));
+            zoom = d3.zoom()
+                .on("zoom", (event) => {
+                    g.attr("transform", event.transform);
+                });
+
+            svg.call(zoom);
             
             // Function to show the tooltip
             function showTooltip(event, d) {
@@ -386,18 +391,18 @@
     function searchNode() {
         const searchTerm = document.getElementById('searchBox').value.toLowerCase();
         const resultsContainer = document.getElementById('searchResults');
-        resultsContainer.innerHTML = ''; // Clear previous results
+        resultsContainer.innerHTML = '';
 
-        globalNodeSelection.each(function(d) {
+        globalNodeSelection.each(function (d) {
             if (d.label.toLowerCase().includes(searchTerm)) {
                 d3.select(this).classed("highlighted", true);
-                
-                // Add matching result to the results container
+
                 const resultDiv = document.createElement('div');
                 resultDiv.classList.add('search-result');
                 resultDiv.textContent = d.label;
-                resultDiv.onclick = function() {
+                resultDiv.onclick = function () {
                     highlightNode(d);
+                    zoomToNode(d);
                 };
                 resultsContainer.appendChild(resultDiv);
             } else {
@@ -425,6 +430,19 @@
             searchNode();
         }
     }
+
+    function zoomToNode(node) {
+        const svg = d3.select("svg");
+        const transform = d3.zoomTransform(svg.node());
+        const x = -node.x * transform.k;
+        const y = -node.y * transform.k;
+
+        svg.transition().duration(750).call(
+            zoom.transform,
+            d3.zoomIdentity.translate(x, y).scale(transform.k)
+        );
+    }
+
     
     function clearHighlights() {
         globalNodeSelection.classed("highlighted", false);
