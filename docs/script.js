@@ -13,16 +13,25 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
 
 function addEventListeners() {
-    document.getElementById('toggleArrowsButton').addEventListener('click', toggleArrows);
+    // Use event delegation for better performance
+    document.addEventListener('click', (event) => {
+        if (event.target.matches('#toggleArrowsButton')) {
+            toggleArrows();
+        } else if (event.target.matches('#searchButton')) {
+            searchNode();
+        } else if (event.target.matches('#clearHighlightsButton')) {
+            clearHighlights();
+        } else if (event.target.closest('#drawerToggle')) {
+            toggleDrawer();
+        }
+    });
+
     document.getElementById('searchBox').addEventListener('keyup', searchNodeOnEnter);
-    document.getElementById('searchButton').addEventListener('click', searchNode);
-    document.getElementById('clearHighlightsButton').addEventListener('click', clearHighlights);
-    document.getElementById('drawerToggle').addEventListener('click', toggleDrawer);
 }
 
 function toggleDrawer() {
-    var drawer = document.getElementById('checkboxDrawer');
-    var toggleButton = document.getElementById('drawerToggle');
+    const drawer = document.getElementById('checkboxDrawer');
+    const toggleButton = document.getElementById('drawerToggle');
     drawer.classList.toggle('drawer-open');
     toggleButton.classList.toggle('drawer-open');
 }
@@ -96,18 +105,18 @@ function setupSimulation(nodes, links) {
     }
 
     function getLinkX2(d) {
-        var dx = d.target.x - d.source.x;
-        var dy = d.target.y - d.source.y;
-        var dr = Math.sqrt(dx * dx + dy * dy);
-        var r = d.target.size;
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const dr = Math.sqrt(dx * dx + dy * dy);
+        const r = d.target.size;
         return d.target.x - (r * dx / dr);
     }
 
     function getLinkY2(d) {
-        var dx = d.target.x - d.source.x;
-        var dy = d.target.y - d.source.y;
-        var dr = Math.sqrt(dx * dx + dy * dy);
-        var r = d.target.size;
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const dr = Math.sqrt(dx * dx + dy * dy);
+        const r = d.target.size;
         return d.target.y - (r * dy / dr);
     }
 }
