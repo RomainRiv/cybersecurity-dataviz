@@ -11,12 +11,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
             hideLoadingIndicator();
             createAbstractionCheckboxes(data); // Create checkboxes
             globalNodeSelection = createChart(data); // Store the initial node selection
+            handleWindowResize(); // Set initial dimensions
         })
         .catch(error => {
             hideLoadingIndicator();
             showError('Error loading data: ' + error.message);
             console.error('Error loading data:', error);
         });
+
+    window.addEventListener('resize', handleWindowResize); // Attach resize event
 });
 
 // Configuration and constants
@@ -24,11 +27,7 @@ const CONFIG = {
     minLinkDistance: 100,
     repulsionStrength: -400,
     alphaDecay: 0.01,
-    velocityDecay: 0.2,
-    svgWidth: window.innerWidth * 0.95,
-    svgHeight: window.innerHeight * 0.90,
-    viewBoxX: -window.innerWidth * 0.475,
-    viewBoxY: -window.innerHeight * 0.45
+    velocityDecay: 0.2
 };
 
 function addEventListeners() {
@@ -57,6 +56,22 @@ function addEventListeners() {
     });
 }
 
+function handleWindowResize() {
+    const svg = d3.select("svg");
+    const container = document.querySelector('.graph-container');
+    const newWidth = container.clientWidth;
+    const newHeight = container.clientHeight;
+
+    svg
+        .attr("width", newWidth)
+        .attr("height", newHeight)
+        .attr("viewBox", [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
+
+    simulation
+        .force("center", d3.forceCenter(0, 0))
+        .restart();
+}
+
 function toggleDrawer() {
     const drawer = document.getElementById('checkboxDrawer');
     const toggleButton = document.getElementById('drawerToggle');
@@ -70,13 +85,14 @@ let globalNodeSelection;
 let zoom; // Declare zoom globally so it can be used in multiple functions
 
 function createChart(data) {
-    const { svgWidth, svgHeight, viewBoxX, viewBoxY } = CONFIG;
+    const container = document.querySelector('.graph-container');
+    const newWidth = container.clientWidth;
+    const newHeight = container.clientHeight;
+    const svg = createSVG(newWidth, newHeight);
+    const g = svg.append("g");
 
     const links = data.links.map(d => ({ ...d }));
     const nodes = data.nodes.map(d => ({ ...d }));
-
-    const svg = createSVG(svgWidth, svgHeight, viewBoxX, viewBoxY);
-    const g = svg.append("g");
 
     setupSimulation(nodes, links);
     setupMarkers(svg);
@@ -86,17 +102,17 @@ function createChart(data) {
     node = createNodes(g, nodes); // Initialize node
     labels = createLabels(g, nodes); // Initialize labels
 
-    document.querySelector('.graph-container').appendChild(svg.node());
+    container.appendChild(svg.node());
     return node;
 }
 
-function createSVG(width, height, viewBoxX, viewBoxY) {
+function createSVG(width, height) {
     return d3.create("svg")
         .attr("width", width)
         .attr("height", height)
-        .attr("viewBox", [viewBoxX, viewBoxY, width, height])
+        .attr("viewBox", [-width / 2, -height / 2, width, height])
         .attr("preserveAspectRatio", "xMidYMid meet")
-        .attr("style", "max-width: 100%; height: auto; display: block; margin: auto;");
+        .attr("style", "width: 100%; height: 100%; display: block; margin: auto;");
 }
 
 function setupSimulation(nodes, links) {

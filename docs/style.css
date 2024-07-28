@@ -1,8 +1,21 @@
-body, html {
+html, body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden; /* Ensure no scrollbars appear */
+}
+
+.graph-container {
+    width: 100%;
+    height: 100vh; /* Full viewport height */
+    position: relative;
+}
+
+svg {
+    width: 100%;
+    height: 100%;
+    display: block; /* Prevents scrollbars from appearing */
 }
 
 .button-container {
@@ -12,10 +25,6 @@ body, html {
 
 .content-container {
     display: flex;
-}
-
-.graph-container {
-    position: relative; /* Needed for absolute positioning of the drawer */
 }
 
 .node-label-big, .node-label-medium, .node-label-small {
