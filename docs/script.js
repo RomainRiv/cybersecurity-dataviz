@@ -3,15 +3,16 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     showLoadingIndicator();
 
-    // Use the sanitized filename in the fetch request, with the 'graphs' subdirectory
     const jsonFilename = "graphs/" + getJsonFilenameFromUrl();
     fetch(jsonFilename)
         .then(response => response.json())
         .then(data => {
             hideLoadingIndicator();
-            createAbstractionCheckboxes(data); // Create checkboxes
+            const urlParameters = getUrlParameters(); // Get URL parameters
+            createAbstractionCheckboxes(data, urlParameters); // Pass URL parameters
             globalNodeSelection = createChart(data); // Store the initial node selection
             handleWindowResize(); // Set initial dimensions
+            updateGraph(data); // Initial update based on URL parameters
         })
         .catch(error => {
             hideLoadingIndicator();
@@ -298,6 +299,16 @@ function getJsonFilenameFromUrl() {
     return 'default.json'; // Default filename if no parameter is provided or after sanitization
 }
 
+function getUrlParameters() {
+    const params = new URLSearchParams(window.location.search);
+    let filters = [];
+    const filterParam = params.get('filters');
+    if (filterParam) {
+        filters = filterParam.split(',').map(filter => filter.trim().split('|'));
+    }
+    return filters;
+}
+
 function searchNode() {
     const searchTerm = document.getElementById('searchBox').value.toLowerCase();
     const resultsContainer = document.getElementById('searchResults');
@@ -378,18 +389,35 @@ function updateGraph(originalData) {
         return filteredNodeIds.has(link.source.id || link.source) && filteredNodeIds.has(link.target.id || link.target);
     });
 
-    // Prepare the new data for the graph
     let filteredData = {
         nodes: filteredNodes,
         links: filteredLinks
     };
 
-    // Clear the existing graph and redraw with the filtered data
     document.querySelector('.graph-container').innerHTML = '';
-    globalNodeSelection = createChart(filteredData); // Update globalNodeSelection
+    globalNodeSelection = createChart(filteredData);
+
+    updateUrlParameters(); // Update URL parameters based on the current checkbox states
 }
 
-function createAbstractionCheckboxes(data) {
+function updateUrlParameters() {
+    const checkboxes = document.querySelectorAll('.checkbox-container input[type="checkbox"]');
+    const params = new URLSearchParams(window.location.search); // Start with current parameters
+
+    let filters = [];
+    checkboxes.forEach(checkbox => {
+        const [type, abstraction] = checkbox.id.replace('checkbox-', '').split('-');
+        if (checkbox.checked) {
+            filters.push(`${type}|${abstraction}`);
+        }
+    });
+
+    params.set('filters', filters.join(','));
+
+    window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
+}
+
+function createAbstractionCheckboxes(data, urlParameters) {
     let typeAbstractionMap = new Map();
 
     // Group abstractions by type
@@ -424,7 +452,7 @@ function createAbstractionCheckboxes(data) {
             checkbox.type = 'checkbox';
             checkbox.classList.add('form-check-input');
             checkbox.id = 'checkbox-' + type + '-' + abstraction;
-            checkbox.checked = true;
+            checkbox.checked = urlParameters.length === 0 || urlParameters.some(param => param[0] === type && param[1] === abstraction);
             checkbox.addEventListener('change', () => updateGraph(data));
 
             // Label for checkbox
